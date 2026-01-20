@@ -64,7 +64,7 @@ export function Teams() {
     }
   };
 
-  const handleSortChange = (field: string, direction: 'asc' | 'desc') => {
+  const handleSortChange = (field: string, direction: any) => {
     setSortBy({ field, direction });
   };
 
@@ -115,7 +115,7 @@ export function Teams() {
     return rootTeams;
   };
 
-  const renderTeamHierarchy = (teams: (Team & { children: Team[] })[], level: number = 0): React.ReactNode => {
+  const renderTeamHierarchy = (teams: (any & { children: any[] })[], level: number = 0): React.ReactNode => {
     return teams.map(team => (
       <div key={team.id}>
         <div 
@@ -149,11 +149,11 @@ export function Teams() {
                   <div className="flex items-center space-x-2">
                     <div className="h-6 w-6 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
                       <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
-                        {team.team_head_name.charAt(0).toUpperCase()}
+                        {team?.team_head_name?.charAt(0)?.toUpperCase()}
                       </span>
                     </div>
                     <span className="text-sm text-gray-900 dark:text-white">
-                      {team.team_head_name}
+                      {team?.team_head_name}
                     </span>
                   </div>
                 </div>
@@ -165,7 +165,7 @@ export function Teams() {
                   <div className="flex items-center space-x-2">
                     <Users className="h-4 w-4 text-gray-400" />
                     <span className="text-sm text-gray-900 dark:text-white">
-                      {team.member_count || 0} member{(team.member_count || 0) !== 1 ? 's' : ''}
+                      {team?.member_count || 0} member{(team?.member_count || 0) !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>
