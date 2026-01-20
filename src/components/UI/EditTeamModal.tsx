@@ -10,11 +10,11 @@ interface EditTeamModalProps {
   onTeamUpdated: (updatedTeam: Team) => void;
 }
 
-export function EditTeamModal({ 
-  isOpen, 
-  onClose, 
-  team, 
-  onTeamUpdated 
+export function EditTeamModal({
+  isOpen,
+  onClose,
+  team,
+  onTeamUpdated
 }: EditTeamModalProps) {
   const [formData, setFormData] = useState({
     name: '',
@@ -26,16 +26,16 @@ export function EditTeamModal({
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
+  const [errorMessage, setErrorMessage] = useState<any[]>([]);
   useEffect(() => {
     if (isOpen) {
       loadData();
       if (team) {
         setFormData({
-          name: team.name,
-          description: team.description || '',
-          team_head: team.team_head_id.toString(),
-          parent_team_id: team.parent_team_id?.toString() || ''
+          name: team?.name,
+          description: team?.description || '',
+          team_head: team?.team_head_id?.toString(),
+          parent_team_id: team?.parent_team_id?.toString() || ''
         });
       }
       setErrors({});
@@ -61,7 +61,7 @@ export function EditTeamModal({
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -90,13 +90,14 @@ export function EditTeamModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm() || !team) {
       return;
     }
 
+    setErrorMessage([])
     setLoading(true);
-    
+
     try {
       const teamData = {
         name: formData.name.trim(),
@@ -107,35 +108,39 @@ export function EditTeamModal({
 
       const updatedTeam = await apiService.updateTeam(team.id, teamData);
       onTeamUpdated(updatedTeam);
-      onClose();
-    } catch (error: any) {
-      console.error('Failed to update team:', error);
-      
-      // Handle validation errors from server
-      if (error.response?.status === 400 && error.response?.data) {
-        const serverErrors: Record<string, string> = {};
-        Object.keys(error.response.data).forEach(key => {
-          if (Array.isArray(error.response.data[key])) {
-            serverErrors[key] = error.response.data[key][0];
-          } else {
-            serverErrors[key] = error.response.data[key];
-          }
-        });
-        setErrors(serverErrors);
-      } else {
-        alert('Failed to update team. Please try again.');
+      if (updatedTeam) {
+        setErrorMessage([])
+        setLoading(false);
+        onClose();
       }
-    } finally {
+    } catch (error: any) {
       setLoading(false);
+      const errData = error?.error;
+
+      if (errData && typeof errData === 'object') {
+        const firstKey = Object.keys(errData)[0];
+        const firstValue = errData[firstKey];
+
+        if (Array.isArray(firstValue) && firstValue.length > 0) {
+          // ✅ key + value together
+          setErrorMessage([`${firstKey}: ${firstValue[0]}`]);
+        } else if (typeof firstValue === 'string') {
+          setErrorMessage([`${firstKey}: ${firstValue}`]);
+        } else {
+          setErrorMessage(['Something went wrong. Please try again.']);
+        }
+      } else {
+        setErrorMessage(['Something went wrong. Please try again later.']);
+      }
     }
   };
 
   // Filter out the current team and its descendants from parent options
   const getAvailableParentTeams = () => {
     if (!team) return teams;
-    
+
     const excludeTeamIds = new Set([team.id]);
-    
+
     // Add all descendant teams to exclude list
     const addDescendants = (teamId: number) => {
       teams.forEach(t => {
@@ -145,9 +150,9 @@ export function EditTeamModal({
         }
       });
     };
-    
+
     addDescendants(team.id);
-    
+
     return teams.filter(t => !excludeTeamIds.has(t.id));
   };
 
@@ -169,7 +174,7 @@ export function EditTeamModal({
             </h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => { onClose(), setErrorMessage([]) }}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
             <X className="h-5 w-5 text-gray-500" />
@@ -188,9 +193,8 @@ export function EditTeamModal({
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
               placeholder="Enter team name"
             />
             {errors.name && (
@@ -224,9 +228,8 @@ export function EditTeamModal({
                 name="team_head"
                 value={formData.team_head}
                 onChange={handleInputChange}
-                className={`w-full pl-10 pr-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.team_head ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                }`}
+                className={`w-full pl-10 pr-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.team_head ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
               >
                 <option value="">Select team head</option>
                 {users.map(user => (
@@ -252,9 +255,8 @@ export function EditTeamModal({
                 name="parent_team_id"
                 value={formData.parent_team_id}
                 onChange={handleInputChange}
-                className={`w-full pl-10 pr-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.parent_team_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                }`}
+                className={`w-full pl-10 pr-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.parent_team_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
               >
                 <option value="">No parent team (Root level)</option>
                 {availableParentTeams.map(parentTeam => (
@@ -278,11 +280,19 @@ export function EditTeamModal({
             </div>
           </div>
 
+          {errorMessage?.length > 0 && (
+            <div className="mb-1 flex justify-end rounded text-sm text-red-700">
+              {errorMessage?.map((msg, i) => (
+                <div key={i}>{msg}</div>
+              ))}
+            </div>
+          )}
+
           {/* Buttons */}
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => { onClose(), setErrorMessage([]) }}
               className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Cancel
