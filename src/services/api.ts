@@ -26,7 +26,7 @@ class ApiService {
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
     };
@@ -45,7 +45,7 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (response.status === 401) {
         // Try to refresh token
         const refreshed = await this.refreshToken();
@@ -69,10 +69,20 @@ class ApiService {
         }
       }
 
+      // if (!response.ok) {
+      //   const errorData = await response.json().catch(() => ({}));
+      //   throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      // }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+
+        throw {
+          status: response.status,
+          error: errorData,
+        };
       }
+
 
       return response.json();
     } catch (error) {
@@ -90,10 +100,10 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
-    
+
     this.setToken(response.tokens.access);
     localStorage.setItem('refresh_token', response.tokens.refresh);
-    
+
     return response;
   }
 
@@ -105,10 +115,10 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(userData),
     });
-    
+
     this.setToken(response.tokens.access);
     localStorage.setItem('refresh_token', response.tokens.refresh);
-    
+
     return response;
   }
 
@@ -142,7 +152,7 @@ class ApiService {
     } catch (error) {
       console.error('Token refresh failed:', error);
     }
-    
+
     return false;
   }
 
@@ -160,7 +170,7 @@ class ApiService {
         }
       });
     }
-    
+
     const endpoint = `/users/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     return this.request<any>(endpoint);
   }
@@ -224,7 +234,7 @@ class ApiService {
         }
       });
     }
-    
+
     const endpoint = `/teams/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     return this.request<any>(endpoint);
   }
@@ -263,7 +273,7 @@ class ApiService {
         }
       });
     }
-    
+
     const endpoint = `/tasks/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     return this.request<any>(endpoint);
   }
@@ -316,7 +326,7 @@ class ApiService {
         }
       });
     }
-    
+
     const endpoint = `/comments/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     return this.request<any>(endpoint);
   }
@@ -408,7 +418,7 @@ class ApiService {
 
     // Don't use the generic request method for file uploads to avoid Content-Type conflicts
     const url = `${this.baseURL}/uploads/upload-file/`;
-    
+
     const headers: HeadersInit = {};
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
@@ -437,7 +447,7 @@ class ApiService {
 
     // Don't use the generic request method for file uploads to avoid Content-Type conflicts
     const url = `${this.baseURL}/uploads/upload-image/`;
-    
+
     const headers: HeadersInit = {};
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
@@ -459,18 +469,18 @@ class ApiService {
 
   async uploadMultipleFiles(files: File[], descriptions?: string[]) {
     const formData = new FormData();
-    
+
     files.forEach((file) => {
       formData.append('files', file);
     });
-    
+
     if (descriptions && descriptions.length > 0) {
       formData.append('descriptions', JSON.stringify(descriptions));
     }
 
     // Don't use the generic request method for file uploads to avoid Content-Type conflicts
     const url = `${this.baseURL}/uploads/upload-files/`;
-    
+
     const headers: HeadersInit = {};
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
@@ -492,18 +502,18 @@ class ApiService {
 
   async uploadMultipleImages(images: File[], descriptions?: string[]) {
     const formData = new FormData();
-    
+
     images.forEach((image) => {
       formData.append('images', image);
     });
-    
+
     if (descriptions && descriptions.length > 0) {
       formData.append('descriptions', JSON.stringify(descriptions));
     }
 
     // Don't use the generic request method for file uploads to avoid Content-Type conflicts
     const url = `${this.baseURL}/uploads/upload-images/`;
-    
+
     const headers: HeadersInit = {};
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
@@ -532,7 +542,7 @@ class ApiService {
         }
       });
     }
-    
+
     const endpoint = `/uploads/files/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     return this.request<any>(endpoint);
   }
@@ -546,7 +556,7 @@ class ApiService {
         }
       });
     }
-    
+
     const endpoint = `/uploads/images/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     return this.request<any>(endpoint);
   }
@@ -630,7 +640,7 @@ class ApiService {
         }
       });
     }
-    
+
     const endpoint = `/notifications/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     return this.request<any>(endpoint);
   }

@@ -397,8 +397,8 @@ export function Users() {
               onClick={() => setSelectedUserForDetail(userData)}
             >
               {/* User Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
+              <div className="flex justify-between flex-wrap items-center mb-4">
+                <div className="flex items-center space-x-3 mb-2">
                   <div className="h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-lg font-semibold text-white">
                       {userData.name.charAt(0).toUpperCase()}
@@ -484,8 +484,8 @@ export function Users() {
 
               {/* Status */}
               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center justify-between">
+                  <div className="flex items-center space-x-2 mb-2">
                     {showDeleted ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300">
                         Deleted
