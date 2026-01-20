@@ -11,18 +11,19 @@ interface CreateTaskModalProps {
   taskToEdit?: Task | null; // If provided, the modal will be in edit mode
 }
 
-export function CreateTaskModal({ 
-  isOpen, 
-  onClose, 
-  onTaskCreated, 
-  onTaskUpdated, 
-  taskToEdit 
+export function CreateTaskModal({
+  isOpen,
+  onClose,
+  onTaskCreated,
+  onTaskUpdated,
+  taskToEdit
 }: CreateTaskModalProps) {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<UserType[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [parentTasks, setParentTasks] = useState<Task[]>([]);
-  
+  const [errorMessage, setErrorMessage] = useState<any[]>([]);
+
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -103,7 +104,7 @@ export function CreateTaskModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    setErrorMessage([])
     try {
       const taskData = {
         ...formData,
@@ -119,18 +120,40 @@ export function CreateTaskModal({
         // Update existing task
         const updatedTask = await apiService.updateTask(taskToEdit.id, taskData);
         onTaskUpdated?.(updatedTask);
+        if (updatedTask) {
+          setLoading(false);
+          setErrorMessage([]);
+          onClose();
+        }
       } else {
         // Create new task
         const newTask = await apiService.createTask(taskData);
         onTaskCreated?.(newTask);
+        if (newTask) {
+          setLoading(false);
+          setErrorMessage([]);
+          onClose();
+        }
       }
 
-      onClose();
-    } catch (error) {
-      console.error(`Failed to ${isEditMode ? 'update' : 'create'} task:`, error);
-      alert(`Failed to ${isEditMode ? 'update' : 'create'} task. Please try again.`);
-    } finally {
+
+    } catch (error: any) {
       setLoading(false);
+      const errData = error?.error;
+      if (errData && typeof errData === 'object') {
+        const firstKey = Object.keys(errData)[0];
+        const firstValue = errData[firstKey];
+        if (Array.isArray(firstValue) && firstValue.length > 0) {
+          // ✅ key + value together
+          setErrorMessage([`${firstKey}: ${firstValue[0]}`]);
+        } else if (typeof firstValue === 'string') {
+          setErrorMessage([`${firstKey}: ${firstValue}`]);
+        } else {
+          setErrorMessage(['Something went wrong. Please try again.']);
+        }
+      } else {
+        setErrorMessage(['Something went wrong. Please try again later.']);
+      }
     }
   };
 
@@ -140,7 +163,7 @@ export function CreateTaskModal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black opacity-50" onClick={onClose} />
-        
+
         <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
@@ -148,7 +171,7 @@ export function CreateTaskModal({
               {isEditMode ? 'Edit Task' : 'Create New Task'}
             </h2>
             <button
-              onClick={onClose}
+              onClick={() => { onClose(), setErrorMessage([]) }}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <X className="h-5 w-5 text-gray-500" />
@@ -357,11 +380,19 @@ export function CreateTaskModal({
               </div>
             </div>
 
+            {errorMessage?.length > 0 && (
+              <div className="mb-1 flex justify-end rounded text-sm text-red-700">
+                {errorMessage?.map((msg, i) => (
+                  <div key={i}>{msg}</div>
+                ))}
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => { onClose(), setErrorMessage([]) }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
               >
                 Cancel

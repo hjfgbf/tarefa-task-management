@@ -16,7 +16,7 @@ export function CreatedTasks() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  
+
   // Filter and sort state
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<Record<string, any>>({});
@@ -34,8 +34,8 @@ export function CreatedTasks() {
         apiService.getTeams()
       ]);
 
-      let allTasks = tasksResponse.results || [];
-
+      // let allTasks = tasksResponse.results || [];
+      let allTasks = tasksResponse || [];
       // Apply client-side filtering
       if (filters.team_id) {
         allTasks = allTasks.filter((task: Task) => task.team.id === parseInt(filters.team_id));
@@ -58,7 +58,7 @@ export function CreatedTasks() {
       // Apply client-side sorting
       allTasks.sort((a: Task, b: Task) => {
         let aValue: any, bValue: any;
-        
+
         switch (sortBy.field) {
           case 'title':
             aValue = a.title.toLowerCase();
@@ -112,12 +112,12 @@ export function CreatedTasks() {
         await apiService.deleteTask(task.id);
         // Remove the deleted task from the list
         setTasks(prev => prev.filter(t => t.id !== task.id));
-        
+
         // If the deleted task was selected for viewing, close the modal
         if (selectedTask?.id === task.id) {
           setSelectedTask(null);
         }
-        
+
         // If the deleted task was being edited, close the edit modal
         if (editingTask?.id === task.id) {
           setEditingTask(null);
@@ -175,7 +175,7 @@ export function CreatedTasks() {
             All tasks created by you ({tasks.length} task{tasks.length !== 1 ? 's' : ''})
           </p>
         </div>
-        
+
         <button
           onClick={() => setCreateModalOpen(true)}
           className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

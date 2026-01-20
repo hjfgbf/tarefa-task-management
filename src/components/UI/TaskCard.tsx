@@ -3,7 +3,7 @@ import { Calendar, User, AlertCircle, CheckCircle, Clock, ArrowRight } from 'luc
 import { Task } from '../../types';
 
 interface TaskCardProps {
-  task: Task;
+  task: any;
   onClick?: () => void;
   showActions?: boolean;
   onEdit?: () => void;
@@ -54,8 +54,8 @@ export function TaskCard({ task, onClick, showActions = false, onEdit, onDelete 
       }`}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
+      <div className="flex items-start flex-wrap justify-between mb-3">
+        <div className="flex-1 mb-2">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
             {task.title}
           </h3>
@@ -66,7 +66,7 @@ export function TaskCard({ task, onClick, showActions = false, onEdit, onDelete 
           )}
         </div>
         
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center flex-wrap gap-2">
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(task.priority)}`}>
             {task.priority}
           </span>
@@ -116,7 +116,7 @@ export function TaskCard({ task, onClick, showActions = false, onEdit, onDelete 
       )}
 
       {showActions && (
-        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-2">
+        <div className="mt-3 flex-wrap pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
           <button
             onClick={(e) => {
               e.stopPropagation();

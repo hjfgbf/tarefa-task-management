@@ -9,10 +9,10 @@ interface CreateTeamModalProps {
   onTeamCreated: (newTeam: Team) => void;
 }
 
-export function CreateTeamModal({ 
-  isOpen, 
-  onClose, 
-  onTeamCreated 
+export function CreateTeamModal({
+  isOpen,
+  onClose,
+  onTeamCreated
 }: CreateTeamModalProps) {
   const [formData, setFormData] = useState({
     name: '',
@@ -24,6 +24,7 @@ export function CreateTeamModal({
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errorMessage, setErrorMessage] = useState<any[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -58,7 +59,7 @@ export function CreateTeamModal({
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -82,13 +83,13 @@ export function CreateTeamModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-
+    setErrorMessage([])
     setLoading(true);
-    
+
     try {
       const teamData = {
         name: formData.name.trim(),
@@ -99,26 +100,30 @@ export function CreateTeamModal({
 
       const newTeam = await apiService.createTeam(teamData);
       onTeamCreated(newTeam);
-      onClose();
-    } catch (error: any) {
-      console.error('Failed to create team:', error);
-      
-      // Handle validation errors from server
-      if (error.response?.status === 400 && error.response?.data) {
-        const serverErrors: Record<string, string> = {};
-        Object.keys(error.response.data).forEach(key => {
-          if (Array.isArray(error.response.data[key])) {
-            serverErrors[key] = error.response.data[key][0];
-          } else {
-            serverErrors[key] = error.response.data[key];
-          }
-        });
-        setErrors(serverErrors);
-      } else {
-        alert('Failed to create team. Please try again.');
+      if (newTeam) {
+        setErrorMessage([])
+        setLoading(false);
+        onClose();
       }
-    } finally {
+    } catch (error: any) {
       setLoading(false);
+      const errData = error?.error;
+
+      if (errData && typeof errData === 'object') {
+        const firstKey = Object.keys(errData)[0];
+        const firstValue = errData[firstKey];
+
+        if (Array.isArray(firstValue) && firstValue.length > 0) {
+          // ✅ key + value together
+          setErrorMessage([`${firstKey}: ${firstValue[0]}`]);
+        } else if (typeof firstValue === 'string') {
+          setErrorMessage([`${firstKey}: ${firstValue}`]);
+        } else {
+          setErrorMessage(['Something went wrong. Please try again.']);
+        }
+      } else {
+        setErrorMessage(['Something went wrong. Please try again later.']);
+      }
     }
   };
 
@@ -138,7 +143,7 @@ export function CreateTeamModal({
             </h2>
           </div>
           <button
-            onClick={onClose}
+               onClick={() => { onClose(), setErrorMessage([]) }}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
             <X className="h-5 w-5 text-gray-500" />
@@ -157,9 +162,8 @@ export function CreateTeamModal({
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
               placeholder="Enter team name"
             />
             {errors.name && (
@@ -193,9 +197,8 @@ export function CreateTeamModal({
                 name="team_head"
                 value={formData.team_head}
                 onChange={handleInputChange}
-                className={`w-full pl-10 pr-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.team_head ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                }`}
+                className={`w-full pl-10 pr-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.team_head ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
               >
                 <option value="">Select team head</option>
                 {users.map(user => (
@@ -221,9 +224,8 @@ export function CreateTeamModal({
                 name="parent_team_id"
                 value={formData.parent_team_id}
                 onChange={handleInputChange}
-                className={`w-full pl-10 pr-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.parent_team_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                }`}
+                className={`w-full pl-10 pr-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.parent_team_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
               >
                 <option value="">No parent team (Root level)</option>
                 {teams.map(team => (
@@ -245,16 +247,25 @@ export function CreateTeamModal({
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
             <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">Team Structure</h4>
             <p className="text-sm text-blue-700 dark:text-blue-400">
-              Teams can be organized in a hierarchy. Root teams have no parent, while sub-teams belong to a parent team. 
+              Teams can be organized in a hierarchy. Root teams have no parent, while sub-teams belong to a parent team.
               The team head will be responsible for managing team members and tasks.
             </p>
           </div>
+
+          {errorMessage?.length > 0 && (
+            <div className="mb-1 flex justify-end rounded text-sm text-red-700">
+              {errorMessage?.map((msg, i) => (
+                <div key={i}>{msg}</div>
+              ))}
+            </div>
+          )}
+
 
           {/* Buttons */}
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
-              onClick={onClose}
+                  onClick={() => { onClose(), setErrorMessage([]) }}
               className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Cancel
