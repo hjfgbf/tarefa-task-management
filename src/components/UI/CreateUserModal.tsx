@@ -487,7 +487,7 @@ export function CreateUserModal({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
+console.log(userToEdit)
   useEffect(() => {
     if (isOpen) {
       loadTeams();
