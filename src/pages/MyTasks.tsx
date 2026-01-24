@@ -6,6 +6,7 @@ import { TaskCard } from '../components/UI/TaskCard';
 import { FilterSort } from '../components/UI/FilterSort';
 import { TaskDetailModal } from '../components/UI/TaskDetailModal';
 import { CheckSquare } from 'lucide-react';
+import { CreateTaskModal } from '../components/UI/CreateTaskModal';
 
 export function MyTasks() {
   const { user } = useAuth();
@@ -13,7 +14,9 @@ export function MyTasks() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+
   // Filter and sort state
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<Record<string, any>>({});
@@ -37,7 +40,7 @@ export function MyTasks() {
         apiService.getTeams()
       ]);
 
-      let allTasks = tasksResponse|| [];
+      let allTasks = tasksResponse || [];
 
       // Apply client-side filtering if needed
       if (filters.team_id) {
@@ -61,7 +64,7 @@ export function MyTasks() {
       // Apply client-side sorting
       allTasks.sort((a: Task, b: Task) => {
         let aValue: any, bValue: any;
-        
+
         switch (sortBy.field) {
           case 'title':
             aValue = a.title.toLowerCase();
@@ -109,7 +112,9 @@ export function MyTasks() {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSortChange = (field: string, direction: 'asc' | 'desc') => {
+  const handleSortChange = (field: string, direction: any
+    // 'asc' | 'desc'
+  ) => {
     setSortBy({ field, direction });
   };
 
@@ -140,6 +145,29 @@ export function MyTasks() {
     { value: 'status_asc', label: 'Status (A-Z)' },
     { value: 'status_desc', label: 'Status (Z-A)' },
   ];
+
+  const handleDeleteTask = async (task: Task) => {
+    if (window.confirm(`Are you sure you want to delete "${task.title}"?`)) {
+      try {
+        await apiService.deleteTask(task.id);
+        // Remove the deleted task from the list
+        setTasks(prev => prev.filter(t => t.id !== task.id));
+
+        // If the deleted task was selected for viewing, close the modal
+        if (selectedTask?.id === task.id) {
+          setSelectedTask(null);
+        }
+
+        // If the deleted task was being edited, close the edit modal
+        if (editingTask?.id === task.id) {
+          setEditingTask(null);
+        }
+      } catch (error) {
+        console.error('Failed to delete task:', error);
+        alert('Failed to delete task. Please try again.');
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -177,7 +205,10 @@ export function MyTasks() {
           <TaskCard
             key={task.id}
             task={task}
+            showActions={true}
             onClick={() => setSelectedTask(task)}
+            onEdit={() => setEditingTask(task)}
+            onDelete={() => handleDeleteTask(task)}
           />
         ))}
       </div>
@@ -200,6 +231,26 @@ export function MyTasks() {
           onClose={() => setSelectedTask(null)}
         />
       )}
+
+      {/* Create/Edit Task Modal */}
+      <CreateTaskModal
+        isOpen={createModalOpen || !!editingTask}
+        onClose={() => {
+          setCreateModalOpen(false);
+          setEditingTask(null);
+        }}
+        taskToEdit={editingTask}
+        onTaskCreated={(task) => {
+          // Add the new task to the list
+          setTasks(prev => [task, ...prev]);
+          setCreateModalOpen(false);
+        }}
+        onTaskUpdated={(task) => {
+          // Update the task in the list
+          setTasks(prev => prev.map(t => t.id === task.id ? task : t));
+          setEditingTask(null);
+        }}
+      />
     </div>
   );
 }

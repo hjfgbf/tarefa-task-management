@@ -8,7 +8,7 @@ interface CreateTaskModalProps {
   onClose: () => void;
   onTaskCreated?: (task: Task) => void;
   onTaskUpdated?: (task: Task) => void;
-  taskToEdit?: Task | null; // If provided, the modal will be in edit mode
+  taskToEdit?: any | null; // If provided, the modal will be in edit mode
 }
 
 export function CreateTaskModal({
@@ -40,7 +40,7 @@ export function CreateTaskModal({
   });
 
   const isEditMode = !!taskToEdit;
-
+console.log(taskToEdit)
   useEffect(() => {
     if (isOpen) {
       loadInitialData();
@@ -53,7 +53,7 @@ export function CreateTaskModal({
           priority: taskToEdit.priority,
           status: taskToEdit.status,
           assignee: taskToEdit.assignee.toString(),
-          team_id: taskToEdit.team?.id?.toString() || '',
+          team_id: taskToEdit.team_id?.toString() || '',
           parent_task_id: taskToEdit.parent_task_id?.toString() || '',
           due_date: taskToEdit.due_date ? taskToEdit.due_date.split('T')[0] : '',
           start_date: taskToEdit.start_date ? taskToEdit.start_date.split('T')[0] : '',
