@@ -124,6 +124,7 @@ export function Users() {
   };
 
   const handleEditUser = (userToEdit: User) => {
+    console.log(userToEdit)
     setEditingUser(userToEdit);
     setIsCreateModalOpen(true);
   };
